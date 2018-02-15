@@ -1,0 +1,11 @@
+{
+    "name": "segura/stackdoctor",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Matthew Baggett",
+            "email": "matt.baggett@segura.co.uk"
+        }
+    ],
+    "require": {}
+}
