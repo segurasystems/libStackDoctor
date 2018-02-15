@@ -1,11 +1,35 @@
 {
     "name": "segura/stackdoctor",
     "type": "library",
+    "repositories": [
+        {
+            "type": "vcs",
+            "url":  "git@github.com:matthewbaggett/docker-cloud-php-api.git"
+        }
+    ],
     "authors": [
         {
             "name": "Matthew Baggett",
             "email": "matt.baggett@segura.co.uk"
         }
     ],
-    "require": {}
+    "config": {
+        "platform": {
+            "php": "7.0.0"
+        }
+    },
+    "require": {
+        "segura/cli-toolkit": "dev-master",
+        "dockercloud/api": "dev-master",
+        "kint-php/kint": "^2.2",
+        "symfony/yaml": "^3.0",
+        "matthewbaggett/clamp": "^1.0",
+        "aws/aws-sdk-php": "^3.45",
+        "hackzilla/password-generator": "^1.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "StackDoctor\\": "src"
+        }
+    }
 }
