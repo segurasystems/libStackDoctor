@@ -14,7 +14,7 @@ interface DbInterface
 
     public function checkUserExists(string $username): bool;
 
-    public function createUser(string $username, string $password, string $hostmask = '%'): bool;
+    public function createUser(string $username, string $password, string $hostname = '%'): bool;
 
     public function checkDatabaseExists(string $databaseName): bool;
 

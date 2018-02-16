@@ -2,6 +2,7 @@
 namespace StackDoctor;
 
 use CLIToolkit\MenuItems\Menu;
+use Faker\Generator;
 use Hackzilla\PasswordGenerator\Generator\ComputerPasswordGenerator;
 use Hackzilla\PasswordGenerator\Generator\PasswordGeneratorInterface;
 use StackDoctor\Interfaces\BackendInterface;
@@ -16,17 +17,18 @@ class StackDoctor
     private $dns;
     /** @var DbInterface */
     private $db;
-    /** @var PasswordGeneratorInterface */
-    protected $passwordGenerator;
+    /** @var Generator */
+    protected $faker;
 
     static public function Factory() : StackDoctor
     {
-        return new self();
+        $calledClass = get_called_class();
+        return new $calledClass();
     }
 
     public function __construct()
     {
-        $this->passwordGenerator = new ComputerPasswordGenerator();
+        $this->faker = \Faker\Factory::create();
     }
 
     public function setBackend(BackendInterface $backend) : StackDoctor

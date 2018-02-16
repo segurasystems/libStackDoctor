@@ -52,7 +52,7 @@ class AuroraDb implements DbInterface
         echo " > Looking up {$this->instanceName}...";
         $instance = $this->getDatabaseInstance();
         echo "[DONE]\n";
-        \Kint::dump($instance);
+        #\Kint::dump($instance);
 
         foreach($this->getListOfIdentitiesToAssert($stack) as $identity){
             if(!$this->checkUserExists($identity['username'])){
@@ -74,37 +74,39 @@ class AuroraDb implements DbInterface
 
     public function checkUserExists(string $username): bool
     {
-        echo "Checking User Exists {$username}... ";
+        #echo "Checking User Exists {$username}... ";
         $db = $this->getDatabaseConnection();
         $sth = $db->prepare("SELECT EXISTS(SELECT 1 FROM mysql.user WHERE `user` = :username) as `EXISTS`");
         $sth->execute([':username' => $username]);
         if($sth->fetch(\PDO::FETCH_ASSOC)['EXISTS']){
-            echo " [EXISTS]\n";
+        #    echo " [EXISTS]\n";
             return true;
         }else{
-            echo " [MISSING]\n";
+        #    echo " [MISSING]\n";
             return false;
         }
     }
 
-    public function createUser(string $username, string $password, string $hostmask = '%'): bool
+    public function createUser(string $username, string $password, string $hostname = '%'): bool
     {
-        #echo "Creating User '{$username}'@'{$hostmask}...";
+        echo "Creating User '{$username}'@'{$hostname}' w/password '{$password}'...";
 
+        $createUserStatement = "CREATE USER '{$username}'@'{$hostname}' IDENTIFIED BY '{$password}'";
         $db = $this->getDatabaseConnection();
-        $sth = $db->prepare("CREATE USER :username@:hostmask IDENTIFIED BY :password");
-        $sth->execute([
-            ':username' => $username,
-            ':password' => $password,
-            ':hostmask' => $hostmask,
-        ]);
+        $sth = $db->prepare($createUserStatement);
+        $sth->execute();
+
+        $setPasswordStatement = "SET PASSWORD FOR '{$username}'@'{$hostname} = PASSWORD('{$password}')";
+        $sth = $db->prepare($setPasswordStatement);
+        $sth->execute();
+
 
         if($this->checkUserExists($username)){
-            #echo " [SUCCESS]\n";
+            echo " [SUCCESS]\n";
             return true;
         }else{
-            #echo " [FAIL]\n";
-            throw new \Exception("Could not create user '{$username}'");
+            echo " [FAIL]\n";
+            throw new \Exception("Could not create user '{$username}': {$createUserStatement} : {$db->errorCode()} : {$db->errorInfo()[2]}");
         }
     }
 

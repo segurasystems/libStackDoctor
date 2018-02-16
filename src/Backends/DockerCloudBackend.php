@@ -49,6 +49,8 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
         $this->waitUntilStatus([Statuses::DOCKER_CLOUD_NOT_RUNNING, Statuses::DOCKER_CLOUD_RUNNING], $dockerCloudStack);
         echo "Deployed {$dockerCloudStack->getName()}\n";
 
+        #die("HALT!\n\n");
+
         $this->startStack($stack);
     }
 
@@ -91,7 +93,7 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
 
         $existingStack = $s->findByName($stack->getName());
         if (!$existingStack) {
-            die("Cannot update a non-existant stack! Did you mean to --deploy?\n\n");
+            die("Cannot update a non-existent stack! Did you mean to --deploy?\n\n");
         }
         if ($existingStack->getState() == Statuses::DOCKER_CLOUD_TERMINATED) {
             die("Cannot update a terminated stack!\n\n");
@@ -266,6 +268,11 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
         $this->waitUntilStatus([Statuses::DOCKER_CLOUD_RUNNING], $dockerCloudStack);
         echo "Waiting for Doctor to stop.\n";
         $this->waitUntilStatus([Statuses::DOCKER_CLOUD_STOPPED], $dockerCloudStack);
+
+        #echo "Waiting for enter key...\n";
+        #$handle = fopen ("php://stdin","r");
+        #fgets($handle);
+
         $serv->terminate($databaseInstall->getUuid());
         echo "Waiting for Doctor to be terminated.\n";
         $this->waitUntilStatus([Statuses::DOCKER_CLOUD_TERMINATED], $databaseInstall);
