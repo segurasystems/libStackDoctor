@@ -65,7 +65,7 @@ class Route53Dns implements DnsInterface
 
     public function setDomain(string $ip, string $domain)
     {
-        echo " > Mapping https://{$domain} to {$ip}...";
+        echo " > Mapping {$domain} to {$ip}...";
         $hostedZoneId = $this->getAppropriateHostedZone($domain);
         $this->route53->changeResourceRecordSets([
             // HostedZoneId is required
