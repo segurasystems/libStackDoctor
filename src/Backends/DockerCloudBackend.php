@@ -11,6 +11,7 @@ use StackDoctor\Enums\DeploymentTags;
 use StackDoctor\Enums\Statuses;
 use StackDoctor\Interfaces\BackendInterface;
 use DockerCloud as DockerCloudApi;
+use StackDoctor\Interfaces\SSLGeneratorInterface;
 
 class DockerCloudBackend extends AbstractBackend implements BackendInterface
 {
@@ -162,6 +163,26 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
         }
         $ips = array_filter($ips);
         return $ips;
+    }
+
+    private function parseVirtualHostToDomainList(string $virtualHost) : array
+    {
+        $hosts = explode(",", $virtualHost);
+        foreach($hosts as $i => $host){
+            $hosts[$i] = trim($host);
+        }
+        $hosts = array_filter($hosts);
+        return $hosts;
+    }
+
+    public function updateCertificates(\StackDoctor\Entities\Stack $stack, SSLGeneratorInterface $SSLGenerator)
+    {
+        foreach($stack->getServices() as $service){
+            if($service->hasEnvironmentVariable('VIRTUAL_HOST')){
+                $hosts = $this->parseVirtualHostToDomainList($service->hasEnvironmentVariable('VIRTUAL_HOST'));
+//@todo continue this
+            }
+        }
     }
 
     public function updateLoadBalancer(\StackDoctor\Entities\Stack $stack)

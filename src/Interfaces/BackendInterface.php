@@ -37,6 +37,8 @@ interface BackendInterface
     
     public function updateLetsEncrypt(\StackDoctor\Entities\Stack $stack);
 
+    public function updateCertificates(\StackDoctor\Entities\Stack $stack, SSLGeneratorInterface $SSLGenerator);
+
     /**
      * @return string[]
      */

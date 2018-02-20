@@ -9,6 +9,7 @@ use StackDoctor\Entities\Stack;
 use StackDoctor\Interfaces\BackendInterface;
 use StackDoctor\Interfaces\DbInterface;
 use StackDoctor\Interfaces\DnsInterface;
+use StackDoctor\Interfaces\SSLGeneratorInterface;
 
 class StackDoctor
 {
@@ -20,6 +21,8 @@ class StackDoctor
     private $db;
     /** @var FakeDataGenerator */
     private $faker;
+    /** @var SSLGeneratorInterface */
+    private $sslGenerator;
 
     const SSL_MODE_DISABLED = 'disabled';
     const SSL_MODE_SELFCERT = 'self-cert';
@@ -93,6 +96,24 @@ class StackDoctor
     }
 
     /**
+     * @return SSLGeneratorInterface
+     */
+    public function getSslGenerator(): SSLGeneratorInterface
+    {
+        return $this->sslGenerator;
+    }
+
+    /**
+     * @param SSLGeneratorInterface $sslGenerator
+     * @return StackDoctor
+     */
+    public function setSslGenerator(SSLGeneratorInterface $sslGenerator): StackDoctor
+    {
+        $this->sslGenerator = $sslGenerator;
+        return $this;
+    }
+
+    /**
      * @return array
      */
     public function getSslModes(): array
@@ -107,6 +128,12 @@ class StackDoctor
     public function setSslModes(array $sslModes): StackDoctor
     {
         $this->sslModes = $sslModes;
+        return $this;
+    }
+
+    public function addSslMode(string $sslMode, int $weight = null): StackDoctor
+    {
+        $this->sslModes[$weight] = $sslMode;
         return $this;
     }
 
@@ -198,7 +225,7 @@ class StackDoctor
         return $name == preg_replace("/[^A-Za-z0-9-]/", '', $name);
     }
 
-    protected function virtualhostCompute($domain)
+    protected function computeVirtualHost($domain)
     {
         $domains = [];
         if($this->getSslMode() != StackDoctor::SSL_MODE_DISABLED){
