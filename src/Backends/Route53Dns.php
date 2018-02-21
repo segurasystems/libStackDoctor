@@ -63,11 +63,17 @@ class Route53Dns implements DnsInterface
 
 
 
-    public function setDomain(string $ip, string $domain)
+    public function setDomain(array $ips, string $domain)
     {
-        echo " > Mapping {$domain} to {$ip}...";
+        echo " > DNS A Record {$domain} => " . implode(", ", $ips) . "...";
         $hostedZoneId = $this->getAppropriateHostedZone($domain);
-        $this->route53->changeResourceRecordSets([
+        $resourceRecords = [];
+        foreach($ips as $ip){
+            $resourceRecords[] = [
+                'Value' => $ip,
+            ];
+        }
+        $changeResult = $this->route53->changeResourceRecordSets([
             // HostedZoneId is required
             'HostedZoneId' => $hostedZoneId,
             // ChangeBatch is required
@@ -84,18 +90,74 @@ class Route53Dns implements DnsInterface
                             'Name' => "{$domain}.",
                             // Type is required
                             'Type'            => 'A',
-                            'TTL'             => 60,
-                            'ResourceRecords' => [
-                                [
-                                    // Value is required
-                                    'Value' => $ip,
-                                ],
-                            ],
+                            'TTL'             => 300,
+                            'ResourceRecords' => $resourceRecords,
                         ],
                     ],
                 ],
             ],
         ]);
+        if($changeResult->get("ChangeInfo")['Status'] == 'PENDING') {
+            while ($changeResult->get('ChangeInfo')['Status'] == 'PENDING') {
+                $changeResult = $this->route53->getChange([
+                    'Id' => $changeResult->get('ChangeInfo')['Id']
+                ]);
+                echo ".";
+                sleep(5);
+            }
+        }
+
+        echo " [DONE]\n";
+    }
+
+    /**
+     * @param string[] $of
+     * @param $domain
+     */
+    public function setCname(array $of, $domain)
+    {
+        echo " > DNS CNAME Record {$domain} => " . implode(", ", $ips) . "..."; 
+        $hostedZoneId = $this->getAppropriateHostedZone($domain);
+        $resourceRecords = [];
+        foreach($of as $item){
+            $resourceRecords[] = [
+                'Value' => $item,
+            ];
+        }
+        $changeResult = $this->route53->changeResourceRecordSets([
+            // HostedZoneId is required
+            'HostedZoneId' => $hostedZoneId,
+            // ChangeBatch is required
+            'ChangeBatch' => [
+                'Comment' => 'string',
+                // Changes is required
+                'Changes' => [
+                    [
+                        // Action is required
+                        'Action' => 'UPSERT',
+                        // ResourceRecordSet is required
+                        'ResourceRecordSet' => [
+                            // Name is required
+                            'Name' => "{$domain}.",
+                            // Type is required
+                            'Type'            => 'CNAME',
+                            'TTL'             => 300,
+                            'ResourceRecords' => $resourceRecords,
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+        if($changeResult->get("ChangeInfo")['Status'] == 'PENDING') {
+            while ($changeResult->get('ChangeInfo')['Status'] == 'PENDING') {
+                $changeResult = $this->route53->getChange([
+                    'Id' => $changeResult->get('ChangeInfo')['Id']
+                ]);
+                echo ".";
+                sleep(3);
+            }
+        }
+
         echo " [DONE]\n";
     }
 
@@ -141,13 +203,41 @@ class Route53Dns implements DnsInterface
      */
     public function updateDomainsToMatchLoadbalancer(array $ips, Stack $stack){
         echo "Setting up {$stack->getName()} dns entries...\n";
+
+        $hostnames = [];
+        $cnames = [];
         foreach($stack->getServices() as $service){
             if(key_exists('VIRTUAL_HOST', $service->getEnvironmentVariables())){
                 $hostname = DockerCloudBackend::ScrubDomain($service->getEnvironmentVariables()['VIRTUAL_HOST']);
-                foreach($ips as $ip) {
-                    $this->setDomain($ip, $hostname);
+                $hostnames[] = $hostname;
+            }
+        }
+
+        usort($hostnames,function($a, $b){
+            return strlen($a) - strlen($b);
+        });
+
+        foreach($hostnames as $i => $hostname){
+            $hostnameElements = array_reverse(explode(".",$hostname));
+
+            $test = '';
+
+            foreach($hostnameElements as $hostnameElement){
+                $test = rtrim($hostnameElement . "." . $test,".");
+                $match = array_search($test, $hostnames);
+                if($match !== false && $hostnames[$match] != $hostname){
+                    echo "{$hostname} is a subdomain of {$hostnames[$match]}\n";
+                    $cnames[$hostname] = $hostnames[$match];
+                    unset($hostnames[$i]);
                 }
             }
+        }
+
+        foreach($hostnames as $hostname){
+            $this->setDomain($ips, $hostname);
+        }
+        foreach($cnames as $cname => $cnameOf){
+            $this->setCname([$cnameOf], $cname);
         }
     }
 
