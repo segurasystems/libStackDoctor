@@ -33,7 +33,14 @@ class Service implements EntityInterface
     private $command;
     /** @var string */
     private $restart = 'always';
-
+    
+    /** @var bool */
+    private $isTTY = false;;
+    /** @var bool */
+    private $isStdinOpen = false;;
+    /** @var bool */
+    private $isPriviledged = false;
+    
     const RESTART_MODE_ALWAYS = 'always';
     const RESTART_MODE_NO = 'no';
     const RESTART_MODE_ON_FAILURE = 'on-failure';
@@ -354,4 +361,60 @@ class Service implements EntityInterface
         $this->instanceCountTarget = $instanceCountTarget;
         return $this;
     }
+
+    /**
+     * @return bool
+     */
+    public function isTTY(): bool
+    {
+        return $this->isTTY;
+    }
+
+    /**
+     * @param bool $isTTY
+     * @return Service
+     */
+    public function setIsTTY(bool $isTTY): Service
+    {
+        $this->isTTY = $isTTY;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isStdinOpen(): bool
+    {
+        return $this->isStdinOpen;
+    }
+
+    /**
+     * @param bool $isStdinOpen
+     * @return Service
+     */
+    public function setIsStdinOpen(bool $isStdinOpen): Service
+    {
+        $this->isStdinOpen = $isStdinOpen;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isPriviledged(): bool
+    {
+        return $this->isPriviledged;
+    }
+
+    /**
+     * @param bool $isPriviledged
+     * @return Service
+     */
+    public function setIsPriviledged(bool $isPriviledged): Service
+    {
+        $this->isPriviledged = $isPriviledged;
+        return $this;
+    }
+    
+    
 }

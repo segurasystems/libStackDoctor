@@ -515,6 +515,9 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
                 'sequential_deployment' => true,
                 'restart' => $service->getRestart(),
                 'command' => $service->getCommand(),
+                'stdin_open' => $service->isStdinOpen(),
+                'priviledged' => $service->isPriviledged(),
+                'tty' => $service->isTTY(),
             ];
 
             $service = array_filter($service);
