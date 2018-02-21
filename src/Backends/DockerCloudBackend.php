@@ -9,6 +9,7 @@ use StackDoctor\Entities\Service;
 use StackDoctor\Enums\DeploymentStrategies;
 use StackDoctor\Enums\DeploymentTags;
 use StackDoctor\Enums\Statuses;
+use StackDoctor\Exceptions;
 use StackDoctor\Interfaces\BackendInterface;
 use DockerCloud as DockerCloudApi;
 use StackDoctor\Interfaces\SSLGeneratorInterface;
@@ -169,35 +170,75 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
     {
         $hosts = explode(",", $virtualHost);
         foreach($hosts as $i => $host){
-            $hosts[$i] = trim($host);
+            $host = trim($host);
+            $host = parse_url($host);
+            $hosts[$i] = $host['host'];
+
         }
+        $hosts = array_unique($hosts);
         $hosts = array_filter($hosts);
         return $hosts;
     }
 
     public function updateCertificates(\StackDoctor\Entities\Stack $stack, SSLGeneratorInterface $SSLGenerator)
     {
-        foreach($stack->getServices() as $service){
-            if($service->hasEnvironmentVariable('VIRTUAL_HOST')){
-                $hosts = $this->parseVirtualHostToDomainList($service->hasEnvironmentVariable('VIRTUAL_HOST'));
-//@todo continue this
+        $s = new DockerCloudApi\API\Stack();
+        $serv = new DockerCloudApi\API\Service();
+
+        $existingStack = $s->findByName($stack->getName());
+        if(!$existingStack){
+            throw new Exceptions\ResourceNotFound("Cannot find stack called {$stack->getName()}");
+        }
+
+        echo "Updating SSL_CERT environment variables: \n";
+        foreach($existingStack->getServices() as $service){
+            $service = $serv->getByUri($service);
+            if($service->hasContainerEnvvar("VIRTUAL_HOST")){
+                $domains = $this->parseVirtualHostToDomainList($service->getContainerEnvvar("VIRTUAL_HOST")->getValue());
+                foreach($domains as $domain){
+                    $cert = $SSLGenerator->getCertForDomain($domain);
+                    $service->deleteContainerEnvvar("SSL_CERT");
+                    $service->addContainerEnvvar(
+                        EnvironmentVariable::build(
+                            "SSL_CERT", 
+                            $cert->getPrivateKey() .
+                            "\n\n" .
+                            $cert->getCertificate()
+                        )
+                    );
+                }
+                echo " > {$service->getName()} ...";
+                $serv->update($service);
+                $serv->redeploy($service->getUuid());
+                echo " [DONE]\n";
             }
         }
+        $loadBalancer = $this->getLoadBalancer();
+        $serv = new DockerCloudApi\API\Service();
+        $loadBalancerService = $serv->findByName('load-balancer', $loadBalancer);
+        $serv->redeploy($loadBalancerService->getUuid());
+    }
+
+    private function getLoadBalancer() : ?Stack
+    {
+        // Talk to Docker Cloud
+        $s = new DockerCloudApi\API\Stack();
+        $loadBalancer = $s->findByName("Load-Balancer");
+        return $loadBalancer;
     }
 
     public function updateLoadBalancer(\StackDoctor\Entities\Stack $stack)
     {
         echo "Updating Loadbalancer...\n";
-        // Talk to Docker Cloud
-        $s = new DockerCloudApi\API\Stack();
-        $loadBalancer = $s->findByName("Load-Balancer");
+        $serv = new DockerCloudApi\API\Service();
+
+        $loadBalancer = $this->getLoadBalancer();
 
         $existingStack = $s->findByName($stack->getName());
 
         $lbServices = $loadBalancer->getServices();
 
         foreach($lbServices as $lbService){
-            $serv = new DockerCloudApi\API\Service();
             $lbService = $serv->getByUri($lbService);
             if($lbService->getName() == 'load-balancer') {
                 $modifiedCount = 0;
