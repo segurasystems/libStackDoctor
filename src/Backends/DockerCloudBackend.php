@@ -132,8 +132,6 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
         $dockerCloudStack = $this->generateDockerCloudStackFromStackEntities($stack);
         $dockerCloudStack->setUuid($existingStack->getUuid());
 
-        // Talk to Docker Cloud
-        $s = new DockerCloudApi\API\Stack();
         echo "Terminating {$dockerCloudStack->getName()}...";
         $this->stackApi->terminate($dockerCloudStack->getUuid());
         echo " [DONE]\n";
@@ -516,7 +514,7 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
                 'restart' => $service->getRestart(),
                 'command' => $service->getCommand(),
                 'stdin_open' => $service->isStdinOpen(),
-                'priviledged' => $service->isPriviledged(),
+                'priviledged' => $service->isPrivileged(),
                 'tty' => $service->isTTY(),
             ];
 

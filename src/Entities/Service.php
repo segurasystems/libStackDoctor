@@ -35,11 +35,11 @@ class Service implements EntityInterface
     private $restart = 'always';
     
     /** @var bool */
-    private $isTTY = false;;
+    private $isTTY = false;
     /** @var bool */
-    private $isStdinOpen = false;;
+    private $isStdinOpen = false;
     /** @var bool */
-    private $isPriviledged = false;
+    private $isPrivileged = false;
     
     const RESTART_MODE_ALWAYS = 'always';
     const RESTART_MODE_NO = 'no';
@@ -401,18 +401,18 @@ class Service implements EntityInterface
     /**
      * @return bool
      */
-    public function isPriviledged(): bool
+    public function isPrivileged(): bool
     {
-        return $this->isPriviledged;
+        return $this->isPrivileged;
     }
 
     /**
-     * @param bool $isPriviledged
+     * @param bool $isPrivileged
      * @return Service
      */
-    public function setIsPriviledged(bool $isPriviledged): Service
+    public function setIsPrivileged(bool $isPrivileged): Service
     {
-        $this->isPriviledged = $isPriviledged;
+        $this->isPrivileged = $isPrivileged;
         return $this;
     }
     
