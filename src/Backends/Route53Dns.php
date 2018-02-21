@@ -16,6 +16,10 @@ class Route53Dns implements DnsInterface
     private $apiRegion;
     /** @var Route53Client */
     private $route53;
+    /** @var int Default TTL for DNS */
+    private $defaultTTL = 300;
+    /** @var int Default delay between polling R53 to see if its done yet... */
+    private $defaultPollDelay = 5;
 
     public function __construct(string $key, string $secret, string $region = 'eu-west-2')
     {
@@ -90,7 +94,7 @@ class Route53Dns implements DnsInterface
                             'Name' => "{$domain}.",
                             // Type is required
                             'Type'            => 'A',
-                            'TTL'             => 300,
+                            'TTL'             => $this->defaultTTL,
                             'ResourceRecords' => $resourceRecords,
                         ],
                     ],
@@ -103,7 +107,7 @@ class Route53Dns implements DnsInterface
                     'Id' => $changeResult->get('ChangeInfo')['Id']
                 ]);
                 echo ".";
-                sleep(5);
+                sleep($this->defaultPollDelay);
             }
         }
 
@@ -141,7 +145,7 @@ class Route53Dns implements DnsInterface
                             'Name' => "{$domain}.",
                             // Type is required
                             'Type'            => 'CNAME',
-                            'TTL'             => 300,
+                            'TTL'             => $this->defaultTTL,
                             'ResourceRecords' => $resourceRecords,
                         ],
                     ],
@@ -154,7 +158,7 @@ class Route53Dns implements DnsInterface
                     'Id' => $changeResult->get('ChangeInfo')['Id']
                 ]);
                 echo ".";
-                sleep(3);
+                sleep($this->defaultPollDelay);
             }
         }
 
