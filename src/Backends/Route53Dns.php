@@ -121,7 +121,7 @@ class Route53Dns implements DnsInterface
      */
     public function setCname(array $of, $domain)
     {
-        echo " > DNS CNAME Record {$domain} => " . implode(", ", $ips) . "...";
+        echo " > DNS CNAME Record {$domain} => " . implode(", ", $of) . "..."; 
         $hostedZoneId = $this->getAppropriateHostedZone($domain);
         $resourceRecords = [];
         foreach ($of as $item) {
