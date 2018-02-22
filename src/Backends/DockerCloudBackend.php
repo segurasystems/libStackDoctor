@@ -63,52 +63,62 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
         $this->waitUntilStatus([Statuses::DOCKER_CLOUD_NOT_RUNNING, Statuses::DOCKER_CLOUD_RUNNING], $dockerCloudStack, true);
         echo "Deployed {$dockerCloudStack->getName()}\n";
 
-        $this->startStack($stack);
+        return $this->getExistingStack($stack);.
     }
 
-    public function startStack(\StackDoctor\Entities\Stack $stack)
+    private function getExistingStack(\StackDoctor\Entities\Stack $stack)  : ?Stack
     {
-
         $existingStack = $this->stackApi->findByName($stack->getName());
-        $dockerCloudStack = $this->generateDockerCloudStackFromStackEntities($stack);
-        $dockerCloudStack->setUuid($existingStack->getUuid());
+        if($existingStack) {
+            $dockerCloudStack = $this->generateDockerCloudStackFromStackEntities($stack);
+            $dockerCloudStack->setUuid($existingStack->getUuid());
+            return $dockerCloudStack;
+        }else{
+            return null;
+        }
+    }
+
+    public function startStack(\StackDoctor\Entities\Stack $stack) : Stack
+    {
+        $dockerCloudStack = $this->getExistingStack($stack);
+        if(!$dockerCloudStack){
+            throw new Exceptions\ResourceNotFound("Cannot find stack called {$stack->getName()}");
+        }
         echo "Starting {$dockerCloudStack->getName()}...";
         $dockerCloudStack = $this->stackApi->start($dockerCloudStack->getUuid());
         echo " [DONE]\n";
         $this->waitUntilStatus([Statuses::DOCKER_CLOUD_RUNNING], $dockerCloudStack, true);
-
-        return true;
+        return $dockerCloudStack;
     }
 
-    public function stopStack(\StackDoctor\Entities\Stack $stack)
+    public function stopStack(\StackDoctor\Entities\Stack $stack) : Stack
     {
-
-        $existingStack = $this->stackApi->findByName($stack->getName());
-        $dockerCloudStack = $this->generateDockerCloudStackFromStackEntities($stack);
-        $dockerCloudStack->setUuid($existingStack->getUuid());
+        $dockerCloudStack = $this->getExistingStack($stack);
+        if(!$dockerCloudStack){
+            throw new Exceptions\ResourceNotFound("Cannot find stack called {$stack->getName()}");
+        }
         echo "Stopping {$dockerCloudStack->getName()}...";
         $dockerCloudStack = $this->stackApi->stop($dockerCloudStack->getUuid());
         echo " [DONE]\n";
         $this->waitUntilStatus(Statuses::DOCKER_CLOUD_STOPPED, $dockerCloudStack);
         echo "Stopped {$dockerCloudStack->getName()}\n";
-
-        return true;
+        return $dockerCloudStack;
     }
 
-    public function updateStack(\StackDoctor\Entities\Stack $stack)
+    public function updateStack(\StackDoctor\Entities\Stack $stack) : Stack
     {
-        $existingStack = $this->stackApi->findByName($stack->getName());
-        if (!$existingStack) {
+        $dockerCloudStack = $this->getExistingStack($stack);
+        if(!$dockerCloudStack){
+            throw new Exceptions\ResourceNotFound("Cannot find stack called {$stack->getName()}");
+        }
+        if (!$dockerCloudStack) {
             die("Cannot update a non-existent stack! Did you mean to --deploy?\n\n");
         }
-        if ($existingStack->getState() == Statuses::DOCKER_CLOUD_TERMINATED) {
+        if ($dockerCloudStack->getState() == Statuses::DOCKER_CLOUD_TERMINATED) {
             die("Cannot update a terminated stack!\n\n");
         }
 
-        $dockerCloudStack = $this->generateDockerCloudStackFromStackEntities($stack);
-        $dockerCloudStack->setUuid($existingStack->getUuid());
-
-        $currentState = $this->stackApi->get($existingStack->getUuid())->getState();
+        $currentState = $this->stackApi->get($dockerCloudStack->getUuid())->getState();
         if(!in_array($currentState, [Statuses::DOCKER_CLOUD_RUNNING, Statuses::DOCKER_CLOUD_NOT_RUNNING, Statuses::DOCKER_CLOUD_STOPPED])){
             die("Cannot update a stack that is in a partial state! State = {$currentState}\n\n");
         }
@@ -125,18 +135,19 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
         return true;
     }
 
-    public function terminateStack(\StackDoctor\Entities\Stack $stack)
+    public function terminateStack(\StackDoctor\Entities\Stack $stack) : Stack
     {
-        $existingStack = $this->stackApi->findByName($stack->getName());
-
-        $dockerCloudStack = $this->generateDockerCloudStackFromStackEntities($stack);
-        $dockerCloudStack->setUuid($existingStack->getUuid());
-
+        $dockerCloudStack = $this->getExistingStack($stack);
+        if(!$dockerCloudStack){
+            throw new Exceptions\ResourceNotFound("Cannot find stack called {$stack->getName()}");
+        }
         echo "Terminating {$dockerCloudStack->getName()}...";
         $this->stackApi->terminate($dockerCloudStack->getUuid());
         echo " [DONE]\n";
         $this->waitUntilStatus(Statuses::DOCKER_CLOUD_TERMINATED, $dockerCloudStack);
         echo "Terminated {$dockerCloudStack->getName()}.\n";
+
+        return $dockerCloudStack;
     }
 
     public function getLoadbalancerIps() : array
@@ -175,10 +186,7 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
 
     public function updateCertificates(\StackDoctor\Entities\Stack $stack, SSLGeneratorInterface $SSLGenerator)
     {
-        $existingStack = $this->stackApi->findByName($stack->getName());
-        if(!$existingStack){
-            throw new Exceptions\ResourceNotFound("Cannot find stack called {$stack->getName()}");
-        }
+        $existingStack = $this->getExistingStack($stack);
         $this->waitUntilStatus(Statuses::DOCKER_CLOUD_RUNNING, $existingStack, true);
         echo "Updating SSL_CERT environment variables: \n";
         foreach($existingStack->getServices() as $service){
