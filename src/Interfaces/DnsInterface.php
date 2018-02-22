@@ -11,6 +11,8 @@ interface DnsInterface
      * @return mixed
      */
     public function setDomain(array $ips, string $domain);
+    
+    public function setCname(array $of, string $domain);
 
     /**
      * @param string[] $ips

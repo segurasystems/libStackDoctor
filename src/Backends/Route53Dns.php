@@ -119,7 +119,7 @@ class Route53Dns implements DnsInterface
      * @param string[] $of
      * @param $domain
      */
-    public function setCname(array $of, $domain)
+    public function setCname(array $of, string $domain, $blocking = true)
     {
         echo " > DNS CNAME Record {$domain} => " . implode(", ", $of) . "..."; 
         $hostedZoneId = $this->getAppropriateHostedZone($domain);
@@ -153,7 +153,7 @@ class Route53Dns implements DnsInterface
                 ],
             ],
         ]);
-        if ($changeResult->get("ChangeInfo")['Status'] == 'PENDING') {
+        if ($blocking && $changeResult->get("ChangeInfo")['Status'] == 'PENDING') {
             while ($changeResult->get('ChangeInfo')['Status'] == 'PENDING') {
                 $changeResult = $this->route53->getChange([
                     'Id' => $changeResult->get('ChangeInfo')['Id']
