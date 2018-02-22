@@ -190,7 +190,7 @@ class Service implements EntityInterface
         return $this;
     }
 
-    public function addEnvironmentalVariable(string $name, string $value): Service
+    public function addEnvironmentalVariable(string $name, string $value = null): Service
     {
         $this->environmentVariables[$name] = $value;
         return $this;
