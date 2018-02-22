@@ -63,7 +63,7 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
         $this->waitUntilStatus([Statuses::DOCKER_CLOUD_NOT_RUNNING, Statuses::DOCKER_CLOUD_RUNNING], $dockerCloudStack, true);
         echo "Deployed {$dockerCloudStack->getName()}\n";
 
-        return $this->getExistingStack($stack);.
+        return $this->getExistingStack($stack);
     }
 
     private function getExistingStack(\StackDoctor\Entities\Stack $stack)  : ?Stack
@@ -452,9 +452,14 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
         return $host;
     }
 
+    public function getRawStack(\StackDoctor\Entities\Stack $stack) : Stack
+    {
+        return $this->stackApi->findByName($stack->getName());
+    }
+
     public function getStackState(\StackDoctor\Entities\Stack $stack): string
     {
-        return $this->stackApi->findByName($stack->getName())->getState();
+        return $this->getRawStack($stack)->getState();
     }
 
     private function generateDockerCloudStackFromStackEntities(\StackDoctor\Entities\Stack $stack) : Stack
