@@ -135,6 +135,13 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
         return true;
     }
 
+    /**
+     * @param \StackDoctor\Entities\Stack $stack
+     * @return Stack
+     * @throws Exceptions\ResourceNotFound
+     * @throws \DockerCloud\Exception
+     * @throws \Exception
+     */
     public function terminateStack(\StackDoctor\Entities\Stack $stack) : Stack
     {
         $dockerCloudStack = $this->getExistingStack($stack);
@@ -517,20 +524,20 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
 
         foreach ($services as $service) {
             $service = [
-                'name' => $service->getName(),
-                'image' => $service->getImageString(),
-                'environment' => $service->getEnvironmentVariablesAsStrings(),
-                'ports' => $service->getPorts() > 0 ? $service->getPortsAsStrings() : null,
-                'tags' => $service->getDeploymentTags() > 0 ? $service->getDeploymentTags() : null,
-                'links' => $service->getLinks() > 0 ? $service->getLinks() : null,
-                'deployment_strategy' => $service->getDeploymentStrategy(),
+                'name'                  => $service->getName(),
+                'image'                 => $service->getImageString(),
+                'environment'           => $service->getEnvironmentVariablesAsStrings(),
+                'ports'                 => $service->getPorts() > 0 ? $service->getPortsAsStrings() : null,
+                'tags'                  => $service->getDeploymentTags() > 0 ? $service->getDeploymentTags() : null,
+                'links'                 => $service->getLinks() > 0 ? $service->getLinks() : null,
+                'deployment_strategy'   => $service->getDeploymentStrategy(),
                 'target_num_containers' => $service->getContainerCountTarget(),
                 'sequential_deployment' => true,
-                'restart' => $service->getRestart(),
-                'command' => $service->getCommand(),
-                'stdin_open' => $service->isStdinOpen(),
-                'privileged' => $service->isPrivileged(),
-                'tty' => $service->isTTY(),
+                'restart'               => $service->getRestart(),
+                'command'               => $service->getCommand(),
+                'stdin_open'            => $service->isStdinOpen(),
+                'privileged'            => $service->isPrivileged(),
+                'tty'                   => $service->isTTY(),
             ];
 
             $service = array_filter($service);
