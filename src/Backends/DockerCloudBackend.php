@@ -467,6 +467,21 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
         return $this->getRawStack($stack)->getState();
     }
 
+    public function getStackEndpoints(\StackDoctor\Entities\Stack $stack): array
+    {
+        $endpoints = [];
+        foreach($this->getRawStack($stack)->getServices() as $service){
+            $service = $this->serviceApi->getByUri($service);
+            foreach($service->getContainers() as $container){
+                $container = $this->containerApi->getByUri($container);
+                foreach($container->getContainerPorts() as $containerPort){
+                    $endpoints[] = parse_url($containerPort->getEndpointUri());
+                }
+            }
+        }
+        return $endpoints;
+    }
+
     private function generateDockerCloudStackFromStackEntities(\StackDoctor\Entities\Stack $stack) : Stack
     {
         // Build stack data

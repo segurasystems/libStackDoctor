@@ -83,6 +83,8 @@ interface BackendInterface
      */
     public function getStackState(\StackDoctor\Entities\Stack $stack) : string;
 
+    public function getStackEndpoints(\StackDoctor\Entities\Stack $stack) : array;
+
     public function getRawStack(\StackDoctor\Entities\Stack $stack);
 
     public function injectDoctor(\StackDoctor\Entities\Stack $stack);
