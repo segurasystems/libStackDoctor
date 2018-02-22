@@ -96,7 +96,7 @@ class Port implements EntityInterface
     public function getExpression() : string
     {
         return ($this->getExternalIp() ? $this->getExternalIp() . ":" : "") .
-            ($this->getExternalIp() ? $this->getExternalIp() . ":" : "") .
+            ($this->getExternalPort() ? $this->getExternalPort() . ":" : "") .
             $this->getInternalPort() .
             ($this->getProtocol() ? "/" . $this->getProtocol() : "");
     }
