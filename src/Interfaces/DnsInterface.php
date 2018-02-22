@@ -1,7 +1,6 @@
 <?php
 namespace StackDoctor\Interfaces;
 
-
 use StackDoctor\Entities;
 
 interface DnsInterface

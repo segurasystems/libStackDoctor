@@ -51,12 +51,13 @@ class Route53Dns implements DnsInterface
 
     private function getAppropriateHostedZone(string $domain)
     {
-        $hostedZones = $this->route53->listHostedZones()->get('HostedZones') ;;
+        $hostedZones = $this->route53->listHostedZones()->get('HostedZones') ;
+        ;
         $domainElements = $this->getDomainElements($domain) ;
-        foreach ($hostedZones as $zoneId => $hostedZone){
+        foreach ($hostedZones as $zoneId => $hostedZone) {
             $hostedZoneElements = $this->getDomainElements($hostedZone['Name']);
-            foreach($hostedZoneElements as $i => $value){
-                if($hostedZoneElements[$i] != $domainElements[$i]){
+            foreach ($hostedZoneElements as $i => $value) {
+                if ($hostedZoneElements[$i] != $domainElements[$i]) {
                     unset($hostedZones[$zoneId]);
                     continue 2;
                 }
@@ -72,7 +73,7 @@ class Route53Dns implements DnsInterface
         echo " > DNS A Record {$domain} => " . implode(", ", $ips) . "...";
         $hostedZoneId = $this->getAppropriateHostedZone($domain);
         $resourceRecords = [];
-        foreach($ips as $ip){
+        foreach ($ips as $ip) {
             $resourceRecords[] = [
                 'Value' => $ip,
             ];
@@ -101,7 +102,7 @@ class Route53Dns implements DnsInterface
                 ],
             ],
         ]);
-        if($changeResult->get("ChangeInfo")['Status'] == 'PENDING') {
+        if ($changeResult->get("ChangeInfo")['Status'] == 'PENDING') {
             while ($changeResult->get('ChangeInfo')['Status'] == 'PENDING') {
                 $changeResult = $this->route53->getChange([
                     'Id' => $changeResult->get('ChangeInfo')['Id']
@@ -120,10 +121,10 @@ class Route53Dns implements DnsInterface
      */
     public function setCname(array $of, $domain)
     {
-        echo " > DNS CNAME Record {$domain} => " . implode(", ", $ips) . "..."; 
+        echo " > DNS CNAME Record {$domain} => " . implode(", ", $ips) . "...";
         $hostedZoneId = $this->getAppropriateHostedZone($domain);
         $resourceRecords = [];
-        foreach($of as $item){
+        foreach ($of as $item) {
             $resourceRecords[] = [
                 'Value' => $item,
             ];
@@ -152,7 +153,7 @@ class Route53Dns implements DnsInterface
                 ],
             ],
         ]);
-        if($changeResult->get("ChangeInfo")['Status'] == 'PENDING') {
+        if ($changeResult->get("ChangeInfo")['Status'] == 'PENDING') {
             while ($changeResult->get('ChangeInfo')['Status'] == 'PENDING') {
                 $changeResult = $this->route53->getChange([
                     'Id' => $changeResult->get('ChangeInfo')['Id']
@@ -205,31 +206,32 @@ class Route53Dns implements DnsInterface
      * @param string[] $ips
      * @param Stack $stack
      */
-    public function updateDomainsToMatchLoadbalancer(array $ips, Stack $stack){
+    public function updateDomainsToMatchLoadbalancer(array $ips, Stack $stack)
+    {
         echo "Setting up {$stack->getName()} dns entries...\n";
 
         $hostnames = [];
         $cnames = [];
-        foreach($stack->getServices() as $service){
-            if(key_exists('VIRTUAL_HOST', $service->getEnvironmentVariables())){
+        foreach ($stack->getServices() as $service) {
+            if (key_exists('VIRTUAL_HOST', $service->getEnvironmentVariables())) {
                 $hostname = DockerCloudBackend::ScrubDomain($service->getEnvironmentVariables()['VIRTUAL_HOST']);
                 $hostnames[] = $hostname;
             }
         }
 
-        usort($hostnames,function($a, $b){
+        usort($hostnames, function ($a, $b) {
             return strlen($a) - strlen($b);
         });
 
-        foreach($hostnames as $i => $hostname){
-            $hostnameElements = array_reverse(explode(".",$hostname));
+        foreach ($hostnames as $i => $hostname) {
+            $hostnameElements = array_reverse(explode(".", $hostname));
 
             $test = '';
 
-            foreach($hostnameElements as $hostnameElement){
-                $test = rtrim($hostnameElement . "." . $test,".");
+            foreach ($hostnameElements as $hostnameElement) {
+                $test = rtrim($hostnameElement . "." . $test, ".");
                 $match = array_search($test, $hostnames);
-                if($match !== false && $hostnames[$match] != $hostname){
+                if ($match !== false && $hostnames[$match] != $hostname) {
                     echo "{$hostname} is a subdomain of {$hostnames[$match]}\n";
                     $cnames[$hostname] = $hostnames[$match];
                     unset($hostnames[$i]);
@@ -237,10 +239,10 @@ class Route53Dns implements DnsInterface
             }
         }
 
-        foreach($hostnames as $hostname){
+        foreach ($hostnames as $hostname) {
             $this->setDomain($ips, $hostname);
         }
-        foreach($cnames as $cname => $cnameOf){
+        foreach ($cnames as $cname => $cnameOf) {
             $this->setCname([$cnameOf], $cname);
         }
     }
@@ -248,10 +250,10 @@ class Route53Dns implements DnsInterface
     public function removeDomains(array $ips, Entities\Stack $stack)
     {
         echo "Removing all of {$stack->getName()}'s DNS entries...\n";
-        foreach($stack->getServices() as $service){
-            if(key_exists('VIRTUAL_HOST', $service->getEnvironmentVariables())){
+        foreach ($stack->getServices() as $service) {
+            if (key_exists('VIRTUAL_HOST', $service->getEnvironmentVariables())) {
                 $hostname = $service->getEnvironmentVariables()['VIRTUAL_HOST'];
-                foreach($ips as $ip) {
+                foreach ($ips as $ip) {
                     $this->removeDomain($ip, $hostname);
                 }
             }

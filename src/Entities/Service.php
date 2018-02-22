@@ -415,6 +415,4 @@ class Service implements EntityInterface
         $this->isPrivileged = $isPrivileged;
         return $this;
     }
-    
-    
 }

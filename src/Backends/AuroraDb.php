@@ -29,7 +29,7 @@ class AuroraDb implements DbInterface
         string $instanceName,
         string $dbUsername,
         string $dbPassword
-    ){
+    ) {
         $this->apiKey = $key;
         $this->apiSecret = $secret;
         $this->apiRegion = $region;
@@ -54,11 +54,11 @@ class AuroraDb implements DbInterface
         echo "[DONE]\n";
         #\Kint::dump($instance);
 
-        foreach($this->getListOfIdentitiesToAssert($stack) as $identity){
-            if(!$this->checkUserExists($identity['username'])){
+        foreach ($this->getListOfIdentitiesToAssert($stack) as $identity) {
+            if (!$this->checkUserExists($identity['username'])) {
                 $this->createUser($identity['username'], $identity['password']);
             }
-            if(!$this->checkDatabaseExists($identity['database'])){
+            if (!$this->checkDatabaseExists($identity['database'])) {
                 $this->createDatabase($identity['database']);
             }
             $this->createUserPermissionOnDatabase($identity['username'], $identity['database']);
@@ -78,10 +78,10 @@ class AuroraDb implements DbInterface
         $db = $this->getDatabaseConnection();
         $sth = $db->prepare("SELECT EXISTS(SELECT 1 FROM mysql.user WHERE `user` = :username) as `EXISTS`");
         $sth->execute([':username' => $username]);
-        if($sth->fetch(\PDO::FETCH_ASSOC)['EXISTS']){
+        if ($sth->fetch(\PDO::FETCH_ASSOC)['EXISTS']) {
         #    echo " [EXISTS]\n";
             return true;
-        }else{
+        } else {
         #    echo " [MISSING]\n";
             return false;
         }
@@ -101,10 +101,10 @@ class AuroraDb implements DbInterface
         $sth->execute();
 
 
-        if($this->checkUserExists($username)){
+        if ($this->checkUserExists($username)) {
             echo " [SUCCESS]\n";
             return true;
-        }else{
+        } else {
             echo " [FAIL]\n";
             throw new \Exception("Could not create user '{$username}': {$createUserStatement} : {$db->errorCode()} : {$db->errorInfo()[2]}");
         }
@@ -118,10 +118,10 @@ class AuroraDb implements DbInterface
         $sth->execute([':databaseName' => $databaseName]);
         $result = $sth->fetch(\PDO::FETCH_ASSOC)['EXISTS'];
         #\Kint::dump("Result:", $result);
-        if($result == $databaseName){
+        if ($result == $databaseName) {
             #echo " [EXISTS]\n";
             return true;
-        }else{
+        } else {
             #echo " [MISSING]\n";
             return false;
         }
@@ -133,10 +133,10 @@ class AuroraDb implements DbInterface
         $db = $this->getDatabaseConnection();
         $db->query("CREATE DATABASE {$databaseName}");
 
-        if($this->checkDatabaseExists($databaseName)){
+        if ($this->checkDatabaseExists($databaseName)) {
             echo " [SUCCESS]\n";
             return true;
-        }else{
+        } else {
             echo " [FAIL]\n";
             throw new \Exception("Could not create database '{$databaseName}': {$db->errorCode()} : {$db->errorInfo()[2]}");
         }
@@ -147,17 +147,18 @@ class AuroraDb implements DbInterface
         $db = $this->getDatabaseConnection();
         $query = "USE {$databaseName}; GRANT ALL PRIVILEGES ON `{$databaseName}`.* TO '{$username}'@'{$hostmask}'; FLUSH PRIVILEGES;";
         $success = $db->query($query);
-        if(!$success){
+        if (!$success) {
             throw new \Exception("Could not set privileges for {$username}@{$hostmask} on {$databaseName} : {$db->errorCode()} : {$db->errorInfo()[2]}");
-        }else{
+        } else {
             return true;
         }
     }
 
-    private function getListOfIdentitiesToAssert(Stack $stack){
+    private function getListOfIdentitiesToAssert(Stack $stack)
+    {
         $identities = [];
-        foreach($stack->getServices() as $service){
-            if($service->hasEnvironmentVariable('MYSQL_USERNAME')) {
+        foreach ($stack->getServices() as $service) {
+            if ($service->hasEnvironmentVariable('MYSQL_USERNAME')) {
                 $identity = [
                     'username' => $service->getEnvironmentVariable('MYSQL_USERNAME'),
                     'password' => $service->getEnvironmentVariable('MYSQL_PASSWORD'),
@@ -182,7 +183,8 @@ class AuroraDb implements DbInterface
         return $response['DBInstances'][0];
     }
 
-    public function getConnectionDetails() : array{
+    public function getConnectionDetails() : array
+    {
         $instance = $this->getDatabaseInstance();
         return [
             'hostname' => $instance['Endpoint']['Address'],

@@ -51,12 +51,12 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
     {
         $dockerCloudStack = $this->generateDockerCloudStackFromStackEntities($stack);
         echo "Creating {$dockerCloudStack->getName()}...";
-        if($this->checkForStackNameCollision($stack->getName())) {
+        if ($this->checkForStackNameCollision($stack->getName())) {
             $matches = $this->stackApi->getList(['name' => $stack->getName()]);
             $match = $matches->getObjects()[0];
             $dockerCloudStack->setUuid($match->getUuid());
             $dockerCloudStack = $this->stackApi->update($dockerCloudStack);
-        }else{
+        } else {
             $dockerCloudStack = $this->stackApi->create($dockerCloudStack);
         }
         echo " [DONE]\n";
@@ -69,11 +69,11 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
     private function getExistingStack(\StackDoctor\Entities\Stack $stack)  : ?Stack
     {
         $existingStack = $this->stackApi->findByName($stack->getName());
-        if($existingStack) {
+        if ($existingStack) {
             $dockerCloudStack = $this->generateDockerCloudStackFromStackEntities($stack);
             $dockerCloudStack->setUuid($existingStack->getUuid());
             return $dockerCloudStack;
-        }else{
+        } else {
             return null;
         }
     }
@@ -81,7 +81,7 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
     public function startStack(\StackDoctor\Entities\Stack $stack) : Stack
     {
         $dockerCloudStack = $this->getExistingStack($stack);
-        if(!$dockerCloudStack){
+        if (!$dockerCloudStack) {
             throw new Exceptions\ResourceNotFound("Cannot find stack called {$stack->getName()}");
         }
         echo "Starting {$dockerCloudStack->getName()}...";
@@ -94,7 +94,7 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
     public function stopStack(\StackDoctor\Entities\Stack $stack) : Stack
     {
         $dockerCloudStack = $this->getExistingStack($stack);
-        if(!$dockerCloudStack){
+        if (!$dockerCloudStack) {
             throw new Exceptions\ResourceNotFound("Cannot find stack called {$stack->getName()}");
         }
         echo "Stopping {$dockerCloudStack->getName()}...";
@@ -108,7 +108,7 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
     public function updateStack(\StackDoctor\Entities\Stack $stack) : Stack
     {
         $dockerCloudStack = $this->getExistingStack($stack);
-        if(!$dockerCloudStack){
+        if (!$dockerCloudStack) {
             throw new Exceptions\ResourceNotFound("Cannot find stack called {$stack->getName()}");
         }
         if (!$dockerCloudStack) {
@@ -119,7 +119,7 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
         }
 
         $currentState = $this->stackApi->get($dockerCloudStack->getUuid())->getState();
-        if(!in_array($currentState, [Statuses::DOCKER_CLOUD_RUNNING, Statuses::DOCKER_CLOUD_NOT_RUNNING, Statuses::DOCKER_CLOUD_STOPPED])){
+        if (!in_array($currentState, [Statuses::DOCKER_CLOUD_RUNNING, Statuses::DOCKER_CLOUD_NOT_RUNNING, Statuses::DOCKER_CLOUD_STOPPED])) {
             die("Cannot update a stack that is in a partial state! State = {$currentState}\n\n");
         }
 
@@ -138,7 +138,7 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
     public function terminateStack(\StackDoctor\Entities\Stack $stack) : Stack
     {
         $dockerCloudStack = $this->getExistingStack($stack);
-        if(!$dockerCloudStack){
+        if (!$dockerCloudStack) {
             throw new Exceptions\ResourceNotFound("Cannot find stack called {$stack->getName()}");
         }
         echo "Terminating {$dockerCloudStack->getName()}...";
@@ -156,10 +156,10 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
         $loadBalancer = $this->stackApi->findByName("Load-Balancer");
         $lbServices = $loadBalancer->getServices();
 
-        foreach($lbServices as $lbService) {
+        foreach ($lbServices as $lbService) {
             $lbService = $this->serviceApi->getByUri($lbService);
             if ($lbService->getName() == 'load-balancer') {
-                foreach($lbService->getContainers() as $lbContainer){
+                foreach ($lbService->getContainers() as $lbContainer) {
                     $lbContainer = $this->containerApi->getByUri($lbContainer);
                     $lbNode = $this->nodeApi->getByUri($lbContainer->getNode());
                     $ips[] = $lbNode->getPublicIp();
@@ -173,11 +173,10 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
     private function parseVirtualHostToDomainList(string $virtualHost) : array
     {
         $hosts = explode(",", $virtualHost);
-        foreach($hosts as $i => $host){
+        foreach ($hosts as $i => $host) {
             $host = trim($host);
             $host = parse_url($host);
             $hosts[$i] = $host['host'];
-
         }
         $hosts = array_unique($hosts);
         $hosts = array_filter($hosts);
@@ -189,16 +188,16 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
         $existingStack = $this->getExistingStack($stack);
         $this->waitUntilStatus(Statuses::DOCKER_CLOUD_RUNNING, $existingStack, true);
         echo "Updating SSL_CERT environment variables: \n";
-        foreach($existingStack->getServices() as $service){
+        foreach ($existingStack->getServices() as $service) {
             $service = $this->serviceApi->getByUri($service);
-            if($service->hasContainerEnvvar("VIRTUAL_HOST")){
+            if ($service->hasContainerEnvvar("VIRTUAL_HOST")) {
                 $domains = $this->parseVirtualHostToDomainList($service->getContainerEnvvar("VIRTUAL_HOST")->getValue());
-                foreach($domains as $domain){
+                foreach ($domains as $domain) {
                     $cert = $SSLGenerator->getCertForDomain($domain);
                     $service->deleteContainerEnvvar("SSL_CERT");
                     $service->addContainerEnvvar(
                         EnvironmentVariable::build(
-                            "SSL_CERT", 
+                            "SSL_CERT",
                             $cert->getPrivateKey() .
                             "\n\n" .
                             $cert->getCertificate()
@@ -231,9 +230,9 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
 
         $lbServices = $loadBalancer->getServices();
 
-        foreach($lbServices as $lbService){
+        foreach ($lbServices as $lbService) {
             $lbService = $this->serviceApi->getByUri($lbService);
-            if($lbService->getName() == 'load-balancer') {
+            if ($lbService->getName() == 'load-balancer') {
                 $modifiedCount = 0;
                 foreach ($existingStack->getServices() as $serviceToLink) {
                     $serviceToLink = $this->serviceApi->getByUri($serviceToLink);
@@ -245,12 +244,12 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
                     }
                     if ($hasVirtualHost) {
                         $linkExists = false;
-                        foreach($lbService->getLinkedToService() as $alreadyLinkedService){
-                            if($alreadyLinkedService->getToService() == $serviceToLink->getResourceUri()){
+                        foreach ($lbService->getLinkedToService() as $alreadyLinkedService) {
+                            if ($alreadyLinkedService->getToService() == $serviceToLink->getResourceUri()) {
                                 $linkExists = true;
                             }
                         }
-                        if(!$linkExists) {
+                        if (!$linkExists) {
                             echo " > Linking {$stack->getName()}'s {$serviceToLink->getName()}...";
                             $lbService->addLinkedToService(
                                 Link::build(
@@ -261,17 +260,16 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
                             );
                             $modifiedCount++;
                             echo " [DONE]\n";
-
-                        }else{
+                        } else {
                             echo " > Skipping {$stack->getName()}'s {$serviceToLink->getName()}, as it already exists.\n";
                         }
                     }
                 }
-                if($modifiedCount > 0) {
+                if ($modifiedCount > 0) {
                     echo " > Updating Loadbalancer config...";
                     $this->serviceApi->update($lbService);
                     echo " [DONE]\n";
-                }else{
+                } else {
                     echo " > No change required to loadbalancer config [SKIP]\n";
                 }
             }
@@ -291,17 +289,17 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
                     ->setName("database-install")
                     ->setImage("segura/stack-doctor")
                     ->setImageVersion("latest")
-                    ->addEnvironmentalVariable("RDS_API_KEY",$environment['RDS_API_KEY'])
-                    ->addEnvironmentalVariable("RDS_API_SECRET",$environment['RDS_API_SECRET'])
-                    ->addEnvironmentalVariable("RDS_INSTANCE_NAME",$environment['RDS_INSTANCE_NAME'])
-                    ->addEnvironmentalVariable("RDS_INSTANCE_MASTER_USERNAME",$environment['RDS_INSTANCE_MASTER_USERNAME'])
-                    ->addEnvironmentalVariable("RDS_INSTANCE_MASTER_PASSWORD",$environment['RDS_INSTANCE_MASTER_PASSWORD'])
+                    ->addEnvironmentalVariable("RDS_API_KEY", $environment['RDS_API_KEY'])
+                    ->addEnvironmentalVariable("RDS_API_SECRET", $environment['RDS_API_SECRET'])
+                    ->addEnvironmentalVariable("RDS_INSTANCE_NAME", $environment['RDS_INSTANCE_NAME'])
+                    ->addEnvironmentalVariable("RDS_INSTANCE_MASTER_USERNAME", $environment['RDS_INSTANCE_MASTER_USERNAME'])
+                    ->addEnvironmentalVariable("RDS_INSTANCE_MASTER_PASSWORD", $environment['RDS_INSTANCE_MASTER_PASSWORD'])
                     ->setDeploymentStrategy(DeploymentStrategies::EMPTIEST_NODE)
                     ->setInstanceCountMax(1)
                     ->addTag(DeploymentTags::BACKEND)
                     ->setRestart(Service::RESTART_MODE_NO)
                     ->setCommand("php /app/stack-doctor --rds-refresh --stack-name {$stackName}")
-        );
+            );
 
         $dockerCloudStack = $this->generateDockerCloudStackFromStackEntities($drStack);
         echo "Creating {$dockerCloudStack->getName()} to inject StackDoctor...";
@@ -344,16 +342,16 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
 
         $lbServices = $loadBalancer->getServices();
 
-        foreach($lbServices as $lbService) {
+        foreach ($lbServices as $lbService) {
             $lbService = $this->serviceApi->getByUri($lbService);
             if ($lbService->getName() == 'load-balancer') {
                 $loadBalancerService = $lbService;
             }
         }
 
-        foreach($lbServices as $lbService){
+        foreach ($lbServices as $lbService) {
             $lbService = $this->serviceApi->getByUri($lbService);
-            if($lbService->getName() == 'letsencrypt'){
+            if ($lbService->getName() == 'letsencrypt') {
                 $domainsToAddToCert = [];
                 foreach ($existingStack->getServices() as $serviceToLink) {
                     $serviceToLink = $this->serviceApi->getByUri($serviceToLink);
@@ -370,24 +368,24 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
                 #\Kint::dump($newCertificate);
 
                 // Get DOMAINS envar from letsencrypt, or make one if non-existant
-                $domainsEnvar = EnvironmentVariable::build('DOMAINS','');
+                $domainsEnvar = EnvironmentVariable::build('DOMAINS', '');
                 $letsEncryptEnvars = $lbService->getContainerEnvvars();
-                foreach($letsEncryptEnvars as $environmentVariable){
-                    if($environmentVariable->getKey() == 'DOMAINS'){
+                foreach ($letsEncryptEnvars as $environmentVariable) {
+                    if ($environmentVariable->getKey() == 'DOMAINS') {
                         $domainsEnvar = $environmentVariable;
                     }
                 }
 
                 // get array of existing cert records
-                $existingCertificates = explode(";" ,$domainsEnvar->getValue());
+                $existingCertificates = explode(";", $domainsEnvar->getValue());
 
                 // Remove blanks
                 $existingCertificates = array_filter($existingCertificates);
 
                 // Remove matching existing row
-                foreach($existingCertificates as $i => $existingCertificate){
-                    foreach($domainsToAddToCert as $domain){
-                        if(in_array($domain, explode(",", $existingCertificate))){
+                foreach ($existingCertificates as $i => $existingCertificate) {
+                    foreach ($domainsToAddToCert as $domain) {
+                        if (in_array($domain, explode(",", $existingCertificate))) {
                             unset($existingCertificates[$i]);
                         }
                     }
@@ -407,7 +405,7 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
                     if ($stateCurrent == Statuses::DOCKER_CLOUD_RUNNING) {
                         $targetMet = true;
                         echo " [DONE]\n";
-                    }else {
+                    } else {
                         echo ".";
                         sleep(1);
                     }
@@ -421,7 +419,7 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
                     if ($stateCurrent == Statuses::DOCKER_CLOUD_RUNNING) {
                         $targetMet = true;
                         echo " [DONE]\n";
-                    }else {
+                    } else {
                         echo ".";
                         sleep(1);
                     }
@@ -435,7 +433,7 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
                     if ($stateCurrent == Statuses::DOCKER_CLOUD_RUNNING) {
                         $targetMet = true;
                         echo " [DONE]\n";
-                    }else {
+                    } else {
                         echo ".";
                         sleep(1);
                     }
@@ -444,9 +442,9 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
         }
     }
 
-    static public function ScrubDomain($domain)
+    public static function ScrubDomain($domain)
     {
-        $domains = explode(",",$domain);
+        $domains = explode(",", $domain);
         $domain = reset($domains);
         $host = parse_url($domain, PHP_URL_HOST);
         return $host;
@@ -475,29 +473,33 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
             $targetStatus = [$targetStatus];
         }
         $targetMet = false;
-        if(!$silent)
+        if (!$silent) {
             echo " > Waiting for {$stack->getName()} to change state to " . implode(" or ", $targetStatus) . "...";
+        }
         while (!$targetMet) {
-            if($stack instanceof Stack) {
+            if ($stack instanceof Stack) {
                 $s = $this->stackApi;
-            }elseif($stack instanceof \DockerCloud\Model\Service){
+            } elseif ($stack instanceof \DockerCloud\Model\Service) {
                 $s = $this->serviceApi;
-            }else{
+            } else {
                 throw new \Exception("Waiting for a " . get_class($stack) . " is not yet supported.");
             }
             $stateCurrent = $s->get($stack->getUuid())->getState();
             if (in_array($stateCurrent, $targetStatus)) {
                 $targetMet = true;
-                if(!$silent)
+                if (!$silent) {
                     echo " [DONE]";
-            }else {
-                if(!$silent)
+                }
+            } else {
+                if (!$silent) {
                     echo ".";
+                }
                 sleep(1);
             }
         }
-        if(!$silent)
+        if (!$silent) {
             echo "\n";
+        }
     }
 
     /**

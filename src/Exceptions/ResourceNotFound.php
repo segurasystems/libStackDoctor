@@ -1,6 +1,7 @@
 <?php
 namespace StackDoctor\Exceptions;
 
-class ResourceNotFound extends StackDoctorException {
+class ResourceNotFound extends StackDoctorException
+{
 
 }

@@ -37,7 +37,7 @@ class StackDoctor
 
     private $sslMode = StackDoctor::SSL_MODE_SELFCERT;
 
-    static public function Factory() : StackDoctor
+    public static function Factory() : StackDoctor
     {
         $called = get_called_class();
         return new $called();
@@ -80,8 +80,8 @@ class StackDoctor
             $this->throwShowstopper("Name cannot contain anything other than letters, numbers or hyphens");
         }
 
-        if($menu->getArgumentValues()->offsetExists('ssl')) {
-            if(!in_array($menu->getArgumentValues()->offsetGet('ssl'),$this->getSslModes())){
+        if ($menu->getArgumentValues()->offsetExists('ssl')) {
+            if (!in_array($menu->getArgumentValues()->offsetGet('ssl'), $this->getSslModes())) {
                 $this->throwShowstopper("--ssl must be one of (" . implode("|", $this->getSslModes()) . ")");
             }
             $this->setSslMode($menu->getArgumentValues()->offsetGet("ssl"));
@@ -228,10 +228,10 @@ class StackDoctor
     protected function computeVirtualHost($domain)
     {
         $domains = [];
-        if($this->getSslMode() != StackDoctor::SSL_MODE_DISABLED){
+        if ($this->getSslMode() != StackDoctor::SSL_MODE_DISABLED) {
             $domains[] = "https://{$domain}";
         }
         $domains[] = "http://{$domain}";
-        return implode(", ",$domains);
+        return implode(", ", $domains);
     }
 }

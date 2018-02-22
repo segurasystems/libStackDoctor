@@ -1,6 +1,7 @@
 <?php
 namespace StackDoctor\Exceptions;
 
-class StackDoctorException extends \Exception {
+class StackDoctorException extends \Exception
+{
 
 }

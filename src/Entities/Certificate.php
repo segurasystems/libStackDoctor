@@ -21,8 +21,9 @@ class Certificate implements EntityInterface
 
     public function __construct(string $domainApplicable = null)
     {
-        if($domainApplicable)
+        if ($domainApplicable) {
             $this->setDomain($domainApplicable);
+        }
     }
 
     /**
@@ -78,5 +79,4 @@ class Certificate implements EntityInterface
         $this->certificate = $certificate;
         return $this;
     }
-
 }
