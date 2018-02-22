@@ -522,7 +522,7 @@ class DockerCloudBackend extends AbstractBackend implements BackendInterface
                 'restart' => $service->getRestart(),
                 'command' => $service->getCommand(),
                 'stdin_open' => $service->isStdinOpen(),
-                'priviledged' => $service->isPrivileged(),
+                'privileged' => $service->isPrivileged(),
                 'tty' => $service->isTTY(),
             ];
 
