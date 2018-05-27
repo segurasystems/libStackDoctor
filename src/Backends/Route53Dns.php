@@ -78,7 +78,7 @@ class Route53Dns implements DnsInterface
                 'Value' => $ip,
             ];
         }
-        $changeResult = $this->route53->changeResourceRecordSets([
+        $this->route53->changeResourceRecordSetsAsync([
             // HostedZoneId is required
             'HostedZoneId' => $hostedZoneId,
             // ChangeBatch is required
@@ -102,15 +102,6 @@ class Route53Dns implements DnsInterface
                 ],
             ],
         ]);
-        if ($changeResult->get("ChangeInfo")['Status'] == 'PENDING') {
-            while ($changeResult->get('ChangeInfo')['Status'] == 'PENDING') {
-                $changeResult = $this->route53->getChange([
-                    'Id' => $changeResult->get('ChangeInfo')['Id']
-                ]);
-                echo ".";
-                sleep($this->defaultPollDelay);
-            }
-        }
 
         echo " [DONE]\n";
     }
@@ -129,7 +120,7 @@ class Route53Dns implements DnsInterface
                 'Value' => $item,
             ];
         }
-        $changeResult = $this->route53->changeResourceRecordSets([
+        $changeResult = $this->route53->changeResourceRecordSetsAsync([
             // HostedZoneId is required
             'HostedZoneId' => $hostedZoneId,
             // ChangeBatch is required
@@ -153,15 +144,6 @@ class Route53Dns implements DnsInterface
                 ],
             ],
         ]);
-        if ($blocking && $changeResult->get("ChangeInfo")['Status'] == 'PENDING') {
-            while ($changeResult->get('ChangeInfo')['Status'] == 'PENDING') {
-                $changeResult = $this->route53->getChange([
-                    'Id' => $changeResult->get('ChangeInfo')['Id']
-                ]);
-                echo ".";
-                sleep($this->defaultPollDelay);
-            }
-        }
 
         echo " [DONE]\n";
     }
@@ -170,7 +152,7 @@ class Route53Dns implements DnsInterface
     {
         echo " > Removing {$domain} from {$ip}...";
         $hostedZoneId = $this->getAppropriateHostedZone($domain);
-        $this->route53->changeResourceRecordSets([
+        $this->route53->changeResourceRecordSetsAsync([
             // HostedZoneId is required
             'HostedZoneId' => $hostedZoneId,
             // ChangeBatch is required
