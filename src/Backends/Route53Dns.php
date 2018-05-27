@@ -78,7 +78,7 @@ class Route53Dns implements DnsInterface
                 'Value' => $ip,
             ];
         }
-        $this->route53->changeResourceRecordSetsAsync([
+        $promise = $this->route53->changeResourceRecordSetsAsync([
             // HostedZoneId is required
             'HostedZoneId' => $hostedZoneId,
             // ChangeBatch is required
@@ -103,6 +103,8 @@ class Route53Dns implements DnsInterface
             ],
         ]);
 
+        $promise->wait();
+
         echo " [DONE]\n";
     }
 
@@ -120,7 +122,7 @@ class Route53Dns implements DnsInterface
                 'Value' => $item,
             ];
         }
-        $changeResult = $this->route53->changeResourceRecordSetsAsync([
+        $promise = $this->route53->changeResourceRecordSetsAsync([
             // HostedZoneId is required
             'HostedZoneId' => $hostedZoneId,
             // ChangeBatch is required
@@ -145,6 +147,8 @@ class Route53Dns implements DnsInterface
             ],
         ]);
 
+        $promise->wait();
+
         echo " [DONE]\n";
     }
 
@@ -152,7 +156,7 @@ class Route53Dns implements DnsInterface
     {
         echo " > Removing {$domain} from {$ip}...";
         $hostedZoneId = $this->getAppropriateHostedZone($domain);
-        $this->route53->changeResourceRecordSetsAsync([
+        $promise = $this->route53->changeResourceRecordSetsAsync([
             // HostedZoneId is required
             'HostedZoneId' => $hostedZoneId,
             // ChangeBatch is required
@@ -181,6 +185,9 @@ class Route53Dns implements DnsInterface
                 ],
             ],
         ]);
+
+        $promise->wait();
+
         echo " [DONE]\n";
     }
 
