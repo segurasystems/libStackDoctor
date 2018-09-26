@@ -25,4 +25,6 @@ interface DnsInterface
      * @param Entities\Stack $stack
      */
     public function removeDomains(array $ips, Entities\Stack $stack);
+
+    public function removeDomain(string $ip, string $domain);
 }
