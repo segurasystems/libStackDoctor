@@ -42,13 +42,37 @@ class LinodeDns implements DnsInterface
         );
     }
 
+    public function hasRecord($type, $domain, $value) : bool
+    {
+        $linodeDomain = $this->getLinodeDomain($domain);
+        if ($linodeDomain) {
+            $domainRecords = self::getHttpRequest()->getJson(self::ENDPOINT . "/{$linodeDomain->id}/records");
+            foreach($domainRecords->data as $domainRecord){
+                if(
+                    strtolower($type) == strtolower($domainRecord->type)
+                    && strtolower($value) == strtolower($domainRecord->target)
+                    && strtolower($domain) == trim(strtolower($domainRecord->name) . "." . strtolower($linodeDomain->domain),".")
+                ){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public function setDomain(array $ips, string $domain)
     {
-        echo " > DNS A Record {$domain} => " . implode(", ", $ips) . "...";
-        foreach($ips as $ip){
-            $this->createRecord('a', $domain, $ip);
+        // @todo: Prevent this from creating duplicates.
+        foreach ($ips as $ip) {
+            echo " > DNS A Record {$domain} => " . implode(", ", $ips) . "...";
+            if ($this->hasRecord('a', $domain, $ip)) {
+                echo " [SKIP]\n";
+            } else {
+                $this->createRecord('a', $domain, $ip);
+
+                echo " [DONE]\n";
+            }
         }
-        echo " [DONE]\n";
     }
 
     /**
